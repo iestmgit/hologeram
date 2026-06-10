@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>هولوگرام کیهانی | افکت سه بعدی خفن با Three.js</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', sans-serif;
+        }
+
+        /* اطلاعات روی صفحه - استایل نئونی و مدرن */
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            letter-spacing: 1px;
+            border-left: 3px solid #0ff;
+            border-right: 3px solid #f0f;
+            pointer-events: none;
+            font-weight: 500;
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+        }
+        .info h1 {
+            margin: 0;
+            font-size: 18px;
+            background: linear-gradient(45deg, cyan, magenta);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        .controls-note {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            color: rgba(255,255,255,0.5);
+            background: rgba(0,0,0,0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-family: monospace;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+
+        @media (max-width: 600px) {
+            .info { font-size: 8px; padding: 6px 12px; bottom: 10px; left: 10px; }
+            .controls-note { font-size: 7px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        ⚡ <h1>هولوگرام کیهانی</h1> | تجربه‌ای سایکدلیک و سه بعدی
+    </div>
+    <div class="controls-note">
+        🖱️ ماوس بکشید → چرخش دوربین | ✨ ذرات نور + توروس نئونی
+    </div>
+
+    <!-- بارگذاری کتابخانه Three.js و افزونه‌ها از CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        
+        // --- راه‌اندازی صحنه، دوربین، رندرر ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x010115); // آبی بسیار تیره و عمیق
+        scene.fog = new THREE.FogExp2(0x010115, 0.008); // مه اسرارآمیز
+
+        // دوربین با زاویه دید باز برای حس حماسی
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(4, 2, 8);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.appendChild(renderer.domElement);
+
+        // --- کنترلر Orbit برای تعامل روان ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;          // اینرسی نرم
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.enablePan = false;
+        controls.zoomSpeed = 1.0;
+        controls.rotateSpeed = 1.0;
+        controls.target.set(0, 0, 0);
+        
+        // --- پست پراسسینگ : افکت Bloom (نئون درخشان) ---
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.4, 0.85);
+        bloomPass.threshold = 0.1;  // شدت درخشش
+        bloomPass.strength = 0.9;
+        bloomPass.radius = 0.8;
+        
+        const effectComposer = new EffectComposer(renderer);
+        effectComposer.addPass(renderScene);
+        effectComposer.addPass(bloomPass);
+        
+        // --- نورپردازی برای ایجاد عمق و درام ---
+        // نور محیطی ملایم
+        const ambientLight = new THREE.AmbientLight(0x111122);
+        scene.add(ambientLight);
+        // نور نقطه‌ای رنگی متحرک بعداً اضافه می‌شود
+        const pointLight = new THREE.PointLight(0xff44aa, 0.8, 20);
+        pointLight.position.set(2, 3, 4);
+        scene.add(pointLight);
+        
+        const pointLight2 = new THREE.PointLight(0x44ffaa, 0.6, 20);
+        pointLight2.position.set(-2, 1, 3);
+        scene.add(pointLight2);
+        
+        // نور جهت‌دار برای درخشش سطوح
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(1, 2, 1);
+        scene.add(dirLight);
+        
+        // --- شی اصلی: توروس (حلقه) با مواد درخشان و گرادیانت ---
+        // ایجاد بافت گرادیانت دایره‌ای برای رنگین‌کمانی شدن
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // رسم گرادیانت شعاعی خفن
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#ff00cc');
+        gradient.addColorStop(0.2, '#ff4444');
+        gradient.addColorStop(0.4, '#ffaa00');
+        gradient.addColorStop(0.6, '#00ffaa');
+        gradient.addColorStop(0.8, '#00aaff');
+        gradient.addColorStop(1, '#aa44ff');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // اضافه کردن خطوط نئونی و الگوهای هولوگرافیک
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 8;
+        for (let i = 0; i < 20; i++) {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 100 + i * 15, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 200, 0, Math.PI * 2);
+        ctx.strokeStyle = '#0ff';
+        ctx.lineWidth = 12;
+        ctx.stroke();
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 1); // ایجاد جلوه مارپیچی روی توروس
+        
+        // مواد اصلی توروس با ترکیب emissive برای درخشش
+        const torusMat = new THREE.MeshStandardMaterial({
+            map: texture,
+            color: 0xffffff,
+            emissive: 0x442266,
+            emissiveIntensity: 0.7,
+            metalness: 0.85,
+            roughness: 0.25,
+            transparent: true,
+            opacity: 0.92
+        });
+        
+        const torus = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.32, 128, 200), torusMat);
+        scene.add(torus);
+        
+        // حلقه دوم با هندسه نازک‌تر و رنگ متفاوت برای لایه‌بندی
+        const innerRingMat = new THREE.MeshStandardMaterial({
+            color: 0xff33aa,
+            emissive: 0xff1188,
+            emissiveIntensity: 0.9,
+            metalness: 0.9,
+            roughness: 0.2,
+            transparent: true
+        });
+        const innerRing = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.12, 128, 200), innerRingMat);
+        scene.add(innerRing);
+        
+        // --- یک کره شیشه‌ای/هولوگرافیک در مرکز برای جذابیت بیشتر ---
+        const coreMat = new THREE.MeshPhysicalMaterial({
+            color: 0x88aaff,
+            emissive: 0x2266ff,
+            emissiveIntensity: 0.5,
+            metalness: 0.3,
+            roughness: 0.2,
+            transparent: true,
+            opacity: 0.65,
+            clearcoat: 1,
+            clearcoatRoughness: 0.1
+        });
+        const coreSphere = new THREE.Mesh(new THREE.SphereGeometry(0.65, 64, 64), coreMat);
+        scene.add(coreSphere);
+        
+        // --- ذرات ریز شناور (استار فیلد + ذرات رنگی) ---
+        const particleCount = 3500;
+        const particlesGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        
+        for (let i = 0; i < particleCount; i++) {
+            // قرارگیری در یک کره به شعاع 5 تا 12 واحد
+            const radius = 5 + Math.random() * 7;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            positions[i*3] = radius * Math.sin(phi) * Math.cos(theta);
+            positions[i*3+1] = radius * Math.sin(phi) * Math.sin(theta) * 0.8; // کمی مسطح شده
+            positions[i*3+2] = radius * Math.cos(phi);
+            
+            // رنگ‌های زنده و نئونی: طیف از صورتی تا سبز و آبی
+            const colorChoice = Math.random();
+            let r, g, b;
+            if (colorChoice < 0.33) {
+                r = 1.0; g = 0.2 + Math.random()*0.5; b = 0.5 + Math.random()*0.5;
+            } else if (colorChoice < 0.66) {
+                r = 0.2 + Math.random()*0.5; g = 0.8 + Math.random()*0.2; b = 1.0;
+            } else {
+                r = 0.8 + Math.random()*0.2; g = 0.2 + Math.random()*0.5; b = 1.0;
+            }
+            colors[i*3] = r;
+            colors[i*3+1] = g;
+            colors[i*3+2] = b;
+        }
+        
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        
+        // بافت نقطه‌ای دایره‌ای برای ظاهر حرفه‌ای
+        const particleCanvas = document.createElement('canvas');
+        particleCanvas.width = 32;
+        particleCanvas.height = 32;
+        const particleCtx = particleCanvas.getContext('2d');
+        particleCtx.fillStyle = 'white';
+        particleCtx.arc(16, 16, 14, 0, Math.PI * 2);
+        particleCtx.fill();
+        particleCtx.globalCompositeOperation = 'source-over';
+        particleCtx.shadowBlur = 0;
+        const particleTexture = new THREE.CanvasTexture(particleCanvas);
+        
+        const particleMat = new THREE.PointsMaterial({
+            size: 0.08,
+            vertexColors: true,
+            map: particleTexture,
+            blending: THREE.AdditiveBlending,
+            transparent: true,
+            opacity: 0.9
+        });
+        
+        const particleSystem = new THREE.Points(particlesGeometry, particleMat);
+        scene.add(particleSystem);
+        
+        // --- حلقه دوم ذرات (کوچک و درخشان تر) مانند "گرده هولوگرام"---
+        const dustCount = 2000;
+        const dustGeo = new THREE.BufferGeometry();
+        const dustPos = [];
+        for (let i = 0; i < dustCount; i++) {
+            // توزیع نزدیک به توروس
+            const angle = Math.random() * Math.PI * 2;
+            const radiusTor = 1.65 + (Math.random() - 0.5) * 0.5;
+            const x = Math.cos(angle) * radiusTor;
+            const z = Math.sin(angle) * radiusTor;
+            const y = (Math.random() - 0.5) * 1.2;
+            dustPos.push(x, y, z);
+        }
+        dustGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(dustPos), 3));
+        const dustMat = new THREE.PointsMaterial({
+            color: 0xff88ff,
+            size: 0.025,
+            blending: THREE.AdditiveBlending,
+            transparent: true
+        });
+        const dustParticles = new THREE.Points(dustGeo, dustMat);
+        scene.add(dustParticles);
+        
+        // --- یک حلقه نورانی اضافی با خطوط (LineLoop) برای افکت هاله---
+        const ringPoints = [];
+        const ringRadius = 2.1;
+        const segments = 120;
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            const x = Math.cos(angle) * ringRadius;
+            const z = Math.sin(angle) * ringRadius;
+            ringPoints.push(new THREE.Vector3(x, 0.1, z));
+        }
+        const ringGeo = new THREE.BufferGeometry().setFromPoints(ringPoints);
+        const ringMatLine = new THREE.LineBasicMaterial({ color: 0x33ccff, transparent: true, opacity: 0.6 });
+        const outerRing = new THREE.LineLoop(ringGeo, ringMatLine);
+        scene.add(outerRing);
+        
+        // حلقه عمودی دیگر برای تنوع
+        const vertRingPoints = [];
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            const y = Math.sin(angle) * ringRadius;
+            const z = Math.cos(angle) * ringRadius;
+            vertRingPoints.push(new THREE.Vector3(0, y, z));
+        }
+        const vertRingGeo = new THREE.BufferGeometry().setFromPoints(vertRingPoints);
+        const vertRingMat = new THREE.LineBasicMaterial({ color: 0xff44aa, transparent: true, opacity: 0.5 });
+        const verticalRing = new THREE.LineLoop(vertRingGeo, vertRingMat);
+        scene.add(verticalRing);
+        
+        // --- افکت سحابی/ مه ستاره‌ای با استفاده از یک صفحه بزرگ و بافت پرنویز (اختیاری) ---
+        // ایجاد یک cloud از ذرات بسیار ریز
+        const nebulaCount = 800;
+        const nebulaGeo = new THREE.BufferGeometry();
+        const nebulaPos = [];
+        for (let i = 0; i < nebulaCount; i++) {
+            nebulaPos.push((Math.random() - 0.5) * 14);
+            nebulaPos.push((Math.random() - 0.5) * 8);
+            nebulaPos.push((Math.random() - 0.5) * 12 - 4);
+        }
+        nebulaGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nebulaPos), 3));
+        const nebulaMat = new THREE.PointsMaterial({
+            color: 0x88aaff,
+            size: 0.05,
+            transparent: true,
+            opacity: 0.3,
+            blending: THREE.AdditiveBlending
+        });
+        const nebulaCloud = new THREE.Points(nebulaGeo, nebulaMat);
+        scene.add(nebulaCloud);
+        
+        // --- متغیرهای انیمیشن و حرکت ---
+        let time = 0;
+        
+        // نورهای متحرک رنگی برای ایجاد بازتاب های روانگردان
+        const movingLight = new THREE.PointLight(0xff44aa, 0.9, 15);
+        movingLight.userData = { speed: 0.6, radius: 3.5, yOffset: 1.2 };
+        scene.add(movingLight);
+        
+        const movingLight2 = new THREE.PointLight(0x44ffaa, 0.7, 15);
+        movingLight2.userData = { speed: 0.9, radius: 2.8, yOffset: -0.8 };
+        scene.add(movingLight2);
+        
+        // --- حلقه پیشرفته انیمیشن با تکنیک‌های سینماتیک ---
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.012;
+            
+            // حرکت چرخشی توروس اصلی و حلقه داخلی با سرعت های متفاوت
+            torus.rotation.x = Math.sin(time * 0.3) * 0.2;
+            torus.rotation.y = time * 0.4;
+            torus.rotation.z = Math.cos(time * 0.5) * 0.15;
+            
+            innerRing.rotation.x = torus.rotation.x + 0.2;
+            innerRing.rotation.y = time * 0.7;
+            innerRing.rotation.z = torus.rotation.z - 0.1;
+            
+            // کره مرکزی با نوسان مقیاس (ضربان دار)
+            const scalePulse = 1 + Math.sin(time * 3) * 0.03;
+            coreSphere.scale.set(scalePulse, scalePulse, scalePulse);
+            
+            // چرخش ذرات دایره‌ای اطراف
+            particleSystem.rotation.y = time * 0.05;
+            particleSystem.rotation.x = Math.sin(time * 0.2) * 0.1;
+            dustParticles.rotation.y = time * 0.2;
+            
+            // حلقه‌های خطی نیز کمی بچرخند
+            outerRing.rotation.z = Math.sin(time * 0.7) * 0.2;
+            outerRing.rotation.x = Math.cos(time * 0.5) * 0.1;
+            verticalRing.rotation.y = time * 0.3;
+            verticalRing.rotation.x = Math.sin(time * 0.9) * 0.2;
+            
+            // حرکت نورهای نقطه‌ای رنگی به صورت مدور
+            const angle1 = time * movingLight.userData.speed;
+            const angle2 = time * movingLight2.userData.speed;
+            movingLight.position.x = Math.cos(angle1) * movingLight.userData.radius;
+            movingLight.position.z = Math.sin(angle1) * movingLight.userData.radius;
+            movingLight.position.y = Math.sin(angle1 * 1.7) * 1.5 + movingLight.userData.yOffset;
+            
+            movingLight2.position.x = Math.cos(angle2) * movingLight2.userData.radius;
+            movingLight2.position.z = Math.sin(angle2 + 1.2) * movingLight2.userData.radius;
+            movingLight2.position.y = Math.cos(angle2 * 1.2) * 1.2 + movingLight2.userData.yOffset;
+            
+            // تغییر شدت نورها برای افکت پالس
+            movingLight.intensity = 0.8 + Math.sin(time * 2.5) * 0.4;
+            movingLight2.intensity = 0.6 + Math.cos(time * 2.2) * 0.3;
+            
+            // تغییر رنگ نور محیطی به صورت چرخه ای ملایم
+            const hue = (time * 0.05) % 1;
+            // scene.background.setHSL(0.65, 0.8, 0.05); // اگر بخواهیم پس زمینه داینامیک شود ولی فعلا ثابت بهتر است
+            
+            // چرخش تدریجی ذرات ابر سحابی
+            nebulaCloud.rotation.y += 0.001;
+            nebulaCloud.rotation.x += 0.0005;
+            
+            // به روزرسانی بافت توروس برای حرکت رنگ (تغییر offset بافت)
+            if (texture) {
+                texture.offset.x += 0.003;
+                texture.offset.y += 0.001;
+            }
+            
+            // کنترل OrbitControls
+            controls.update(); // برای damping و autoRotate اگر فعال شود، اما autoRotate=false است، فقط برای damping به روز می‌شود
+            
+            // رندر با افکت کامپوزر
+            effectComposer.render();
+        }
+        
+        animate();
+        
+        // --- تنظیم ریسپانسیو بودن در اندازه صفحه ---
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            effectComposer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // افکت کوچک کنسول برای خفن‌تر شدن (اختیاری)
+        console.log("%c✨ هولوگرام کیهانی راه‌اندازی شد | طراحی سه بعدی با Three.js ✨", "color: #0ff; font-size: 16px; font-family: monospace;");
+        
+        // اضافه کردن یک ستاره درخشان متحرک به صورت شهاب وار? نه ساده نگه میداریم، ولی همین کافیست!
+    </script>
+</body>
+</html>
